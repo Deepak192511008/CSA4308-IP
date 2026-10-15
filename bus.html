@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Bus Ticket Booking System - IP Lab</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        header {
+            background-color: #e65c00;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        nav .nav-btn {
+            background: none;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        nav .nav-btn:hover, nav .nav-btn.active {
+            background-color: #cc5200;
+            border-radius: 4px;
+        }
+
+        .btn-primary { background-color: #ff6600; border-radius: 4px; color: white; border: none; padding: 0.5rem 1rem; cursor: pointer; }
+        .btn-secondary { background-color: #333333; border-radius: 4px; color: white; border: none; padding: 0.5rem 1rem; cursor: pointer; }
+        .btn-danger { background-color: #d90429; border-radius: 4px; color: white; border: none; padding: 0.5rem 1rem; cursor: pointer; }
+
+        .container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 1rem;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80') center/cover;
+            color: white;
+            border-radius: 8px;
+        }
+
+        .hero h1 { font-size: 2.8rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.1rem; margin-bottom: 2rem; }
+
+        .search-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+            align-items: flex-end;
+        }
+
+        .search-box .field { flex: 1; min-width: 200px; }
+        .search-box label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        .search-box input, .search-box select { width: 100%; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px; }
+
+        .bus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .bus-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+            padding: 1rem;
+        }
+
+        .bus-card img { width: 100%; height: 160px; object-fit: cover; border-radius: 4px; }
+        .bus-card h3 { margin: 10px 0 5px; color: #222; }
+
+        .dashboard-grid, .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card.full-width { grid-column: span 2; }
+        .card label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .card input, .card select, .card textarea { width: 100%; padding: 0.6rem; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        .data-table th { background-color: #f1f1f1; }
+
+        /* Seat Layout */
+        .seat-container {
+            display: grid;
+            grid-template-columns: repeat(4, 50px);
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+            background: #f1f1f1;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .seat {
+            width: 50px; height: 45px;
+            background-color: #e0e0e0;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .seat.selected { background-color: #ff6600; color: white; border-color: #cc5200; }
+        .seat.booked { background-color: #d90429; color: white; cursor: not-allowed; border-color: #b5031f; }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 8% auto;
+            padding: 2rem;
+            width: 90%; max-width: 550px;
+            border-radius: 8px;
+            position: relative;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            position: absolute; right: 1rem; top: 1rem;
+            font-size: 1.5rem; cursor: pointer;
+        }
+
+        .news-ticker {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+        }
+
+        @media(max-width: 768px) {
+            .dashboard-grid, .admin-grid { grid-template-columns: 1fr; }
+            .card.full-width { grid-column: span 1; }
+            header { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">🚌 SwiftBus Booking</div>
+        <nav>
+            <button onclick="switchTab('home')" class="nav-btn active">Home</button>
+            <button onclick="switchTab('buses')" class="nav-btn">Search Buses</button>
+            <div id="auth-nav-buttons" style="display:inline;">
+                <button onclick="openModal('loginModal')" class="nav-btn btn-primary">Login</button>
+                <button onclick="openModal('registerModal')" class="nav-btn btn-secondary">Register</button>
+            </div>
+            <div id="user-nav-menu" style="display:none; display:inline;">
+                <span id="welcome-user" style="color: white; margin-right: 10px; font-weight:500;"></span>
+                <button id="dashboard-tab-btn" onclick="switchTab('dashboard')" class="nav-btn">Dashboard</button>
+                <button id="admin-tab-btn" onclick="switchTab('adminPanel')" class="nav-btn" style="display:none;">Admin Panel</button>
+                <button onclick="logout()" class="nav-btn btn-danger">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        
+        <!-- HOME TAB -->
+        <section id="home" class="tab-content active">
+            <div class="hero">
+                <h1>Travel Across Destinations in Comfort</h1>
+                <p>Book Volvo, Sleeper, and AC coach tickets securely with real-time seat selection.</p>
+                <button onclick="switchTab('buses')" class="btn-primary" style="padding: 0.8rem 1.8rem; font-size:1.1rem;">Book Tickets Now</button>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <h3>📢 Latest Travel News & Announcements</h3>
+                <div id="home-news-container" class="news-ticker" style="margin-top: 10px;">
+                    Loading announcements...
+                </div>
+            </div>
+        </section>
+
+        <!-- SEARCH & BUSES TAB -->
+        <section id="buses" class="tab-content">
+            <h2>Search Available Buses</h2>
+            <div class="search-box">
+                <div class="field">
+                    <label>From (Source)</label>
+                    <input type="text" id="search-from" placeholder="e.g. New York">
+                </div>
+                <div class="field">
+                    <label>To (Destination)</label>
+                    <input type="text" id="search-to" placeholder="e.g. Boston">
+                </div>
+                <div class="field">
+                    <label>Date of Journey</label>
+                    <input type="date" id="search-date">
+                </div>
+                <button onclick="filterBuses()" class="btn-primary" style="height: 42px;">Search Buses</button>
+            </div>
+
+            <div id="bus-list" class="bus-grid"></div>
+        </section>
+
+        <!-- USER DASHBOARD -->
+        <section id="dashboard" class="tab-content">
+            <h2>User Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>My Profile & Authentication Utilities</h3>
+                    <form id="profile-form" onsubmit="updateProfile(event)">
+                        <label>Full Name: <input type="text" id="prof-name" required></label>
+                        <label>Email ID: <input type="email" id="prof-email" disabled></label>
+                        <label>Phone Number: <input type="text" id="prof-phone" required></label>
+                        <button type="submit" class="btn-primary" style="margin-top:10px;">Update Profile</button>
+                    </form>
+                    
+                    <hr style="margin: 20px 0; border:0; border-top:1px solid #eee;">
+                    <h4>Security Utilities</h4>
+                    <button onclick="openModal('changePasswordModal')" class="btn-secondary" style="margin-top:10px; width:100%;">Change Password</button>
+                </div>
+
+                <div class="card full-width">
+                    <h3>My Booking History & Ticket Management</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Bus Name</th>
+                                <th>Route</th>
+                                <th>Date & Time</th>
+                                <th>Seats</th>
+                                <th>Total Price</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-bookings-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN PANEL -->
+        <section id="adminPanel" class="tab-content">
+            <h2>Administrator Control Panel</h2>
+            <div class="admin-grid">
+                
+                <!-- Bus Management -->
+                <div class="card">
+                    <h3>Add / Update Bus & Schedule</h3>
+                    <form onsubmit="saveBus(event)">
+                        <input type="hidden" id="admin-bus-id">
+                        <label>Bus Name: <input type="text" id="admin-bus-name" required></label>
+                        <label>Category: 
+                            <select id="admin-bus-category" required>
+                                <option value="Volvo AC">Volvo AC</option>
+                                <option value="Sleeper Coach">Sleeper Coach</option>
+                                <option value="Luxury Coach">Luxury Coach</option>
+                                <option value="Non-AC Seater">Non-AC Seater</option>
+                            </select>
+                        </label>
+                        <label>Route (Source to Destination): <input type="text" id="admin-bus-route" placeholder="New York to Boston" required></label>
+                        <label>Departure Date: <input type="date" id="admin-bus-date" required></label>
+                        <label>Departure Time: <input type="time" id="admin-bus-time" required></label>
+                        <label>Ticket Price ($): <input type="number" id="admin-bus-price" required></label>
+                        <label>Total Seats: <input type="number" id="admin-bus-seats" value="20" required></label>
+                        <label>Photo URL: <input type="text" id="admin-bus-photo" placeholder="Image URL"></label>
+                        <button type="submit" class="btn-primary" style="margin-top:10px;">Save Bus Information</button>
+                    </form>
+                </div>
+
+                <!-- News & System Management -->
+                <div class="card">
+                    <h3>Manage Announcements & News</h3>
+                    <form onsubmit="postNews(event)">
+                        <label>News Headline / Update: <textarea id="admin-news-text" rows="3" required placeholder="Enter announcement..."></textarea></label>
+                        <button type="submit" class="btn-primary" style="margin-top:10px;">Publish News</button>
+                    </form>
+
+                    <h3 style="margin-top:20px;">Report Generation</h3>
+                    <p style="font-size:0.9rem; color:#666; margin-bottom:10px;">Generate system performance & booking reports.</p>
+                    <button onclick="generateReport()" class="btn-secondary">Generate Booking & Revenue Report</button>
+                    <div id="report-output" style="margin-top:10px; font-size:0.9rem; background:#f4f4f4; padding:10px; border-radius:4px; max-height:120px; overflow-y:auto;"></div>
+                </div>
+
+                <!-- All System Data Tables -->
+                <div class="card full-width">
+                    <h3>All Registered Users Management</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th></tr>
+                        </thead>
+                        <tbody id="admin-users-table"></tbody>
+                    </table>
+                </div>
+
+                <div class="card full-width">
+                    <h3>All Buses Catalog</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Bus Name</th><th>Category</th><th>Route</th><th>Date & Time</th><th>Price</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="admin-buses-table"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('loginModal')">&times;</span>
+            <h2>User / Admin Login</h2>
+            <form onsubmit="handleLogin(event)">
+                <label>Email: <input type="email" id="login-email" required></label>
+                <label>Password: <input type="password" id="login-password" required></label>
+                <button type="submit" class="btn-primary" style="margin-top:15px; width:100%;">Login</button>
+            </form>
+            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.9rem;">
+                <a href="#" onclick="closeModal('loginModal'); openModal('forgotPasswordModal'); return false;" style="color:#ff6600;">Forgot Password?</a>
+            </div>
+            <p style="margin-top:15px; font-size:0.85rem; background:#f1f1f1; padding:8px; border-radius:4px;">
+                <b>Admin:</b> admin@bus.com / admin123<br>
+                <b>User:</b> user@bus.com / user123
+            </p>
+        </div>
+    </div>
+
+    <!-- REGISTER MODAL -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('registerModal')">&times;</span>
+            <h2>New User Registration</h2>
+            <form onsubmit="handleRegister(event)">
+                <label>Full Name: <input type="text" id="reg-name" required></label>
+                <label>Email: <input type="email" id="reg-email" required></label>
+                <label>Phone: <input type="text" id="reg-phone" required></label>
+                <label>Password: <input type="password" id="reg-password" required></label>
+                <button type="submit" class="btn-primary" style="margin-top:15px; width:100%;">Register Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FORGOT PASSWORD MODAL -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('forgotPasswordModal')">&times;</span>
+            <h2>Forgot Password Recovery</h2>
+            <form onsubmit="handleForgotPassword(event)">
+                <label>Registered Email: <input type="email" id="forgot-email" required></label>
+                <label>New Password: <input type="password" id="forgot-new-password" required></label>
+                <button type="submit" class="btn-primary" style="margin-top:15px; width:100%;">Reset Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CHANGE PASSWORD MODAL -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('changePasswordModal')">&times;</span>
+            <h2>Change Password</h2>
+            <form onsubmit="handleChangePassword(event)">
+                <label>Current Password: <input type="password" id="current-pass" required></label>
+                <label>New Password: <input type="password" id="new-pass" required></label>
+                <button type="submit" class="btn-primary" style="margin-top:15px; width:100%;">Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SEAT BOOKING & DETAILS MODAL -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('bookingModal')">&times;</span>
+            <h2 id="modal-bus-title">Book Tickets</h2>
+            <p id="modal-bus-info" style="color:#666; font-size:0.9rem; margin-bottom:10px;"></p>
+            
+            <h4>Select Seats (Click to select/deselect):</h4>
+            <div id="seat-layout" class="seat-container"></div>
+            
+            <p style="font-weight:600;">Selected Seats: <span id="selected-seats-display">None</span></p>
+            <p style="font-weight:600; margin-bottom:10px;">Total Price: $<span id="booking-total-price">0</span></p>
+
+            <form onsubmit="confirmBooking(event)">
+                <input type="hidden" id="booking-bus-id">
+                <label>Passenger Name: <input type="text" id="pass-name" required></label>
+                <label>Passenger Age: <input type="number" id="pass-age" required></label>
+                
+                <div style="margin-top:15px; background:#fff8f0; padding:10px; border:1px dashed #ff6600; border-radius:4px;">
+                    <h4>Secure Payment Gateway</h4>
+                    <label>Card Number: <input type="text" placeholder="4111 2222 3333 4444" required></label>
+                    <label>Expiry / CVV: <input type="text" placeholder="MM/YY | CVV" required></label>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="margin-top:15px; width:100%;">Pay & Book Ticket</button>
+            </form>
+
+            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+            
+            <h4>Comments & Reviews on this Bus</h4>
+            <div id="bus-comments-list" style="max-height:100px; overflow-y:auto; margin-bottom:10px; font-size:0.9rem; background:#f9f9f9; padding:8px;"></div>
+            <form onsubmit="postComment(event)">
+                <input type="text" id="new-comment-text" placeholder="Write a comment..." required>
+                <button type="submit" class="btn-secondary" style="margin-top:5px; padding:4px 10px; font-size:0.85rem;">Post Comment</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- INITIAL STATE & LOCAL STORAGE ---
+        const defaultBuses = [
+            { id: 1, name: "Express Volvo 101", category: "Volvo AC", route: "New York to Boston", date: "2026-06-15", time: "08:00 AM", price: 45, seats: 20, bookedSeats: ["A2", "B1"], photo: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=500&q=80" },
+            { id: 2, name: "Night Sleeper Express", category: "Sleeper Coach", route: "Los Angeles to San Francisco", date: "2026-06-16", time: "10:00 PM", price: 65, seats: 20, bookedSeats: ["C3"], photo: "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=500&q=80" },
+            { id: 3, name: "CityLink AC Seater", category: "Luxury Coach", route: "Chicago to Detroit", date: "2026-06-18", time: "09:30 AM", price: 35, seats: 20, bookedSeats: [], photo: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=500&q=80" }
+        ];
+
+        const defaultNews = [
+            { id: 1, text: "Welcome to SwiftBus! Enjoy 10% discount on all Volvo AC routes this weekend." },
+            { id: 2, text: "New luxury sleeper coaches added for Los Angeles - San Francisco route." }
+        ];
+
+        if (!localStorage.getItem('buses')) localStorage.setItem('buses', JSON.stringify(defaultBuses));
+        if (!localStorage.getItem('news')) localStorage.setItem('news', JSON.stringify(defaultNews));
+        if (!localStorage.getItem('users')) {
+            localStorage.setItem('users', JSON.stringify([
+                { name: "Default User", email: "user@bus.com", phone: "555-0199", password: "user123", role: "user" },
+                { name: "Administrator", email: "admin@bus.com", phone: "555-0100", password: "admin123", role: "admin" }
+            ]));
+        }
+        if (!localStorage.getItem('bookings')) localStorage.setItem('bookings', JSON.stringify([]));
+        if (!localStorage.getItem('comments')) localStorage.setItem('comments', JSON.stringify([
+            { busId: 1, user: "Default User", text: "Very comfortable ride and punctual!" }
+        ]));
+
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let activeSelectedSeats = [];
+        let currentActiveBusId = null;
+
+        // --- NAVIGATION & TABS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('nav .nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'home') loadHomeNews();
+            if (tabId === 'buses') renderBuses(JSON.parse(localStorage.getItem('buses')));
+            if (tabId === 'dashboard') loadUserDashboard();
+            if (tabId === 'adminPanel') loadAdminPanel();
+        }
+
+        function updateNavAuth() {
+            const authNav = document.getElementById('auth-nav-buttons');
+            const userNav = document.getElementById('user-nav-menu');
+            const adminBtn = document.getElementById('admin-tab-btn');
+            const welcomeUser = document.getElementById('welcome-user');
+
+            if (currentUser) {
+                authNav.style.display = 'none';
+                userNav.style.display = 'inline';
+                welcomeUser.innerText = `Hello, ${currentUser.name}`;
+                adminBtn.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
+            } else {
+                authNav.style.display = 'inline';
+                userNav.style.display = 'none';
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- AUTHENTICATION & UTILITIES ---
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const phone = document.getElementById('reg-phone').value;
+            const password = document.getElementById('reg-password').value;
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            if (users.some(u => u.email === email)) {
+                alert("Email already registered!");
+                return;
+            }
+
+            users.push({ name, email, phone, password, role: 'user' });
+            localStorage.setItem('users', JSON.stringify(users));
+            alert("Registration successful! Please login.");
+            closeModal('registerModal');
+            openModal('loginModal');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            let user = users.find(u => u.email === email && u.password === password);
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateNavAuth();
+                closeModal('loginModal');
+                alert(`Welcome back, ${user.name}!`);
+                switchTab(user.role === 'admin' ? 'adminPanel' : 'dashboard');
+            } else {
+                alert("Invalid email or password!");
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateNavAuth();
+            switchTab('home');
+            alert("Logged out successfully.");
+        }
+
+        function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value;
+            const newPass = document.getElementById('forgot-new-password').value;
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            let user = users.find(u => u.email === email);
+            if (user) {
+                user.password = newPass;
+                localStorage.setItem('users', JSON.stringify(users));
+                alert("Password successfully reset! You can now login.");
+                closeModal('forgotPasswordModal');
+                openModal('loginModal');
+            } else {
+                alert("Email not found in registered users.");
+            }
+        }
+
+        function handleChangePassword(e) {
+            e.preventDefault();
+            const currentPass = document.getElementById('current-pass').value;
+            const newPass = document.getElementById('new-pass').value;
+
+            if (currentUser.password !== currentPass) {
+                alert("Current password is incorrect.");
+                return;
+            }
+
+            currentUser.password = newPass;
+            let users = JSON.parse(localStorage.getItem('users'));
+            users = users.map(u => u.email === currentUser.email ? currentUser : u);
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            alert("Password changed successfully!");
+            closeModal('changePasswordModal');
+        }
+
+        // --- HOME NEWS ---
+        function loadHomeNews() {
+            const news = JSON.parse(localStorage.getItem('news'));
+            const container = document.getElementById('home-news-container');
+            container.innerHTML = news.map(n => `<p>• ${n.text}</p>`).join('');
+        }
+
+        // --- BUS SEARCH & CATALOG ---
+        function renderBuses(busesArray) {
+            const container = document.getElementById('bus-list');
+            container.innerHTML = '';
+
+            if (busesArray.length === 0) {
+                container.innerHTML = `<p>No buses found matching your criteria.</p>`;
+                return;
+            }
+
+            busesArray.forEach(bus => {
+                container.innerHTML += `
+                    <div class="bus-card">
+                        <img src="${bus.photo}" alt="${bus.name}">
+                        <h3>${bus.name}</h3>
+                        <p><b>Category:</b> ${bus.category}</p>
+                        <p><b>Route:</b> ${bus.route}</p>
+                        <p><b>Date & Time:</b> ${bus.date} at ${bus.time}</p>
+                        <p><b>Price:</b> $${bus.price} per seat</p>
+                        <button onclick="openBookingModal(${bus.id})" class="btn-primary" style="margin-top:10px; width:100%;">Select Seats & Book</button>
+                    </div>
+                `;
+            });
+        }
+
+        function filterBuses() {
+            const from = document.getElementById('search-from').value.toLowerCase();
+            const to = document.getElementById('search-to').value.toLowerCase();
+            const date = document.getElementById('search-date').value;
+
+            const buses = JSON.parse(localStorage.getItem('buses'));
+            const filtered = buses.filter(b => {
+                const routeMatch = b.route.toLowerCase().includes(from) && b.route.toLowerCase().includes(to);
+                const dateMatch = date ? b.date === date : true;
+                return routeMatch && dateMatch;
+            });
+
+            renderBuses(filtered);
+        }
+
+        // --- SEAT BOOKING & COMMENTS ---
+        function openBookingModal(busId) {
+            if (!currentUser) {
+                alert("Please login first to book bus tickets.");
+                openModal('loginModal');
+                return;
+            }
+
+            currentActiveBusId = busId;
+            activeSelectedSeats = [];
+            const buses = JSON.parse(localStorage.getItem('buses'));
+            const bus = buses.find(b => b.id === busId);
+
+            document.getElementById('modal-bus-title').innerText = bus.name;
+            document.getElementById('modal-bus-info').innerText = `Route: ${bus.route} | Date: ${bus.date} (${bus.time}) | $${bus.price}/seat`;
+            document.getElementById('booking-bus-id').value = bus.id;
+            document.getElementById('pass-name').value = currentUser.name;
+
+            renderSeatLayout(bus);
+            loadBusComments(busId);
+            openModal('bookingModal');
+        }
+
+        function renderSeatLayout(bus) {
+            const layout = document.getElementById('seat-layout');
+            layout.innerHTML = '';
+            const totalSeats = bus.seats || 20;
+            const rows = ['A', 'B', 'C', 'D', 'E'];
+
+            for (let i = 1; i <= totalSeats; i++) {
+                const rowLetter = rows[Math.floor((i - 1) / 4)];
+                const seatNum = `${rowLetter}${(i - 1) % 4 + 1}`;
+                const isBooked = bus.bookedSeats && bus.bookedSeats.includes(seatNum);
+                const isSelected = activeSelectedSeats.includes(seatNum);
+
+                let className = 'seat';
+                if (isBooked) className += ' booked';
+                if (isSelected) className += ' selected';
+
+                layout.innerHTML += `
+                    <div class="${className}" onclick="${isBooked ? '' : `toggleSeat('${seatNum}',${bus.price})`}">${seatNum}</div>
+                `;
+            }
+            document.getElementById('selected-seats-display').innerText = activeSelectedSeats.length > 0 ? activeSelectedSeats.join(', ') : 'None';
+            document.getElementById('booking-total-price').innerText = activeSelectedSeats.length * bus.price;
+        }
+
+        function toggleSeat(seatNum, price) {
+            if (activeSelectedSeats.includes(seatNum)) {
+                activeSelectedSeats = activeSelectedSeats.filter(s => s !== seatNum);
+            } else {
+                activeSelectedSeats.push(seatNum);
+            }
+            const buses = JSON.parse(localStorage.getItem('buses'));
+            const bus = buses.find(b => b.id === currentActiveBusId);
+            renderSeatLayout(bus);
+        }
+
+        function confirmBooking(e) {
+            e.preventDefault();
+            if (activeSelectedSeats.length === 0) {
+                alert("Please select at least one seat.");
+                return;
+            }
+
+            const buses = JSON.parse(localStorage.getItem('buses'));
+            const busIndex = buses.findIndex(b => b.id === currentActiveBusId);
+            
+            buses[busIndex].bookedSeats = buses[busIndex].bookedSeats.concat(activeSelectedSeats);
+            localStorage.setItem('buses', JSON.stringify(buses));
+
+            const bookings = JSON.parse(localStorage.getItem('bookings'));
+            const newBooking = {
+                id: 'BK' + Math.floor(1000 + Math.random() * 9000),
+                userEmail: currentUser.email,
+                busName: buses[busIndex].name,
+                route: buses[busIndex].route,
+                dateTime: `${buses[busIndex].date} at ${buses[busIndex].time}`,
+                seats: [...activeSelectedSeats],
+                totalPrice: activeSelectedSeats.length * buses[busIndex].price,
+                passenger: document.getElementById('pass-name').value
+            };
+
+            bookings.push(newBooking);
+            localStorage.setItem('bookings', JSON.stringify(bookings));
+
+            closeModal('bookingModal');
+            alert(`Booking confirmed successfully! Confirmation sent to ${currentUser.email}.`);
+            switchTab('dashboard');
+        }
+
+        function loadBusComments(busId) {
+            const comments = JSON.parse(localStorage.getItem('comments'));
+            const busComments = comments.filter(c => c.busId === busId);
+            const container = document.getElementById('bus-comments-list');
+            container.innerHTML = busComments.length > 0 ? busComments.map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') : '<i>No comments yet.</i>';
+        }
+
+        function postComment(e) {
+            e.preventDefault();
+            if (!currentUser) return;
+            const text = document.getElementById('new-comment-text').value;
+            let comments = JSON.parse(localStorage.getItem('comments'));
+            comments.push({ busId: currentActiveBusId, user: currentUser.name, text });
+            localStorage.setItem('comments', JSON.stringify(comments));
+            document.getElementById('new-comment-text').value = '';
+            loadBusComments(currentActiveBusId);
+        }
+
+        // --- USER DASHBOARD ---
+        function loadUserDashboard() {
+            if (!currentUser) return;
+            document.getElementById('prof-name').value = currentUser.name;
+            document.getElementById('prof-email').value = currentUser.email;
+            document.getElementById('prof-phone').value = currentUser.phone;
+
+            const bookings = JSON.parse(localStorage.getItem('bookings'));
+            const userBookings = bookings.filter(b => b.userEmail === currentUser.email);
+            const tbody = document.getElementById('user-bookings-table');
+            tbody.innerHTML = '';
+
+            if (userBookings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No booking history found.</td></tr>`;
+                return;
+            }
+
+            userBookings.forEach(b => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${b.id}</td>
+                        <td>${b.busName}</td>
+                        <td>${b.route}</td>
+                        <td>${b.dateTime}</td>
+                        <td>${b.seats.join(', ')}</td>
+                        <td>$${b.totalPrice}</td>
+                        <td><button onclick="cancelBooking('${b.id}')" class="btn-danger" style="padding:4px 8px; font-size:0.8rem;">Cancel Ticket</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateProfile(e) {
+            e.preventDefault();
+            currentUser.name = document.getElementById('prof-name').value;
+            currentUser.phone = document.getElementById('prof-phone').value;
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            users = users.map(u => u.email === currentUser.email ? currentUser : u);
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            alert("Profile updated successfully!");
+            updateNavAuth();
+        }
+
+        function cancelBooking(bookingId) {
+            if (confirm("Are you sure you want to cancel this ticket booking?")) {
+                let bookings = JSON.parse(localStorage.getItem('bookings'));
+                let booking = bookings.find(b => b.id === bookingId);
+                
+                // Free up seats in bus catalog
+                let buses = JSON.parse(localStorage.getItem('buses'));
+                let bus = buses.find(b => b.name === booking.busName);
+                if (bus) {
+                    bus.bookedSeats = bus.bookedSeats.filter(s => !booking.seats.includes(s));
+                    localStorage.setItem('buses', JSON.stringify(buses));
+                }
+
+                bookings = bookings.filter(b => b.id !== bookingId);
+                localStorage.setItem('bookings', JSON.stringify(bookings));
+                loadUserDashboard();
+                alert("Ticket cancelled successfully.");
+            }
+        }
+
+        // --- ADMIN PANEL ---
+        function loadAdminPanel() {
+            if (!currentUser || currentUser.role !== 'admin') {
+                alert("Unauthorized access!");
+                switchTab('home');
+                return;
+            }
+
+            // 1. Users table
+            const users = JSON.parse(localStorage.getItem('users'));
+            const userTbody = document.getElementById('admin-users-table');
+            userTbody.innerHTML = users.map(u => `<tr><td>${u.name}</td><td>${u.email}</td><td>${u.phone}</td><td>${u.role}</td></tr>`).join('');
+
+            // 2. Buses table
+            const buses = JSON.parse(localStorage.getItem('buses'));
+            const busTbody = document.getElementById('admin-buses-table');
+            busTbody.innerHTML = buses.map(b => `
+                <tr>
+                    <td>${b.name}</td>
+                    <td>${b.category}</td>
+                    <td>${b.route}</td>
+                    <td>${b.date} ${b.time}</td>
+                    <td>$${b.price}</td>
+                    <td><button onclick="deleteBus(${b.id})" class="btn-danger" style="padding:2px 6px; font-size:0.8rem;">Delete</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function saveBus(e) {
+            e.preventDefault();
+            const name = document.getElementById('admin-bus-name').value;
+            const category = document.getElementById('admin-bus-category').value;
+            const route = document.getElementById('admin-bus-route').value;
+            const date = document.getElementById('admin-bus-date').value;
+            const time = document.getElementById('admin-bus-time').value;
+            const price = parseFloat(document.getElementById('admin-bus-price').value);
+            const seats = parseInt(document.getElementById('admin-bus-seats').value);
+            const photo = document.getElementById('admin-bus-photo').value || "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=500&q=80";
+
+            let buses = JSON.parse(localStorage.getItem('buses'));
+            const newBus = { id: Date.now(), name, category, route, date, time, price, seats, bookedSeats: [], photo };
+            buses.push(newBus);
+            localStorage.setItem('buses', JSON.stringify(buses));
+
+            alert("Bus information saved successfully!");
+            loadAdminPanel();
+        }
+
+        function deleteBus(busId) {
+            if (confirm("Delete this bus schedule?")) {
+                let buses = JSON.parse(localStorage.getItem('buses'));
+                buses = buses.filter(b => b.id !== busId);
+                localStorage.setItem('buses', JSON.stringify(buses));
+                loadAdminPanel();
+            }
+        }
+
+        function postNews(e) {
+            e.preventDefault();
+            const text = document.getElementById('admin-news-text').value;
+            let news = JSON.parse(localStorage.getItem('news'));
+            news.push({ id: Date.now(), text });
+            localStorage.setItem('news', JSON.stringify(news));
+            document.getElementById('admin-news-text').value = '';
+            alert("News announcement posted successfully!");
+        }
+
+        function generateReport() {
+            const bookings = JSON.parse(localStorage.getItem('bookings'));
+            const totalRevenue = bookings.reduce((sum, b) => sum + b.totalPrice, 0);
+            const totalTickets = bookings.reduce((sum, b) => sum + b.seats.length, 0);
+
+            const reportDiv = document.getElementById('report-output');
+            reportDiv.innerHTML = `
+                <b>📊 System Report Summary:</b><br>
+                • Total Active Bookings: ${bookings.length}<br>
+                • Total Seats Booked: ${totalTickets}<br>
+                • Total Revenue Generated: $${totalRevenue}
+            `;
+        }
+
+        window.onload = function() {
+            updateNavAuth();
+            renderBuses(JSON.parse(localStorage.getItem('buses')));
+        };
+    </script>
+</body>
+</html>
