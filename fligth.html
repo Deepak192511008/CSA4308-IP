@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Flight Reservation System - IP Lab</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+        }
+
+        header {
+            background-color: #0f172a;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        nav .nav-btn {
+            background: none;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        nav .nav-btn:hover, nav .nav-btn.active {
+            background-color: #334155;
+            border-radius: 4px;
+        }
+
+        .btn-primary { background-color: #2563eb; border-radius: 4px; color: white; border: none; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600; }
+        .btn-secondary { background-color: #64748b; border-radius: 4px; color: white; border: none; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600; }
+        .btn-danger { background-color: #dc2626; border-radius: 4px; color: white; border: none; padding: 0.5rem 1rem; cursor: pointer; }
+
+        .container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 1rem;
+            background: linear-gradient(rgba(15,23,42,0.75), rgba(15,23,42,0.75)), url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80') center/cover;
+            color: white;
+            border-radius: 8px;
+        }
+
+        .hero h1 { font-size: 2.8rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.1rem; margin-bottom: 2rem; }
+
+        .search-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+            align-items: flex-end;
+        }
+
+        .search-box .field { flex: 1; min-width: 180px; }
+        .search-box label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        .search-box input, .search-box select { width: 100%; padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: 4px; }
+
+        .flight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .flight-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.06);
+            padding: 1.2rem;
+        }
+
+        .flight-card h3 { margin-bottom: 8px; color: #0f172a; }
+        .flight-card p { font-size: 0.95rem; margin-bottom: 4px; }
+
+        .dashboard-grid, .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card.full-width { grid-column: span 2; }
+        .card label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; }
+        .card input, .card select, .card textarea { width: 100%; padding: 0.6rem; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .data-table th { background-color: #f8fafc; }
+
+        /* Seat Layout Grid */
+        .seat-container {
+            display: grid;
+            grid-template-columns: repeat(6, 40px);
+            gap: 8px;
+            justify-content: center;
+            margin: 15px 0;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .seat {
+            width: 40px; height: 38px;
+            background-color: #e2e8f0;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        .seat.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+        .seat.booked { background-color: #dc2626; color: white; cursor: not-allowed; border-color: #b91c1c; }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            width: 90%; max-width: 600px;
+            border-radius: 8px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            position: absolute; right: 1rem; top: 1rem;
+            font-size: 1.5rem; cursor: pointer;
+        }
+
+        .ticket-print-box {
+            border: 2px dashed #2563eb;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        @media(max-width: 768px) {
+            .dashboard-grid, .admin-grid { grid-template-columns: 1fr; }
+            .card.full-width { grid-column: span 1; }
+            header { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">✈️ SkyWings Global Airlines</div>
+        <nav>
+            <button onclick="switchTab('home')" class="nav-btn active">Home</button>
+            <button onclick="switchTab('flights')" class="nav-btn">Search Flights</button>
+            <button onclick="switchTab('feedback')" class="nav-btn">Feedback</button>
+            <div id="auth-nav-buttons" style="display:inline;">
+                <button onclick="openModal('loginModal')" class="nav-btn btn-primary">Login</button>
+                <button onclick="openModal('registerModal')" class="nav-btn btn-secondary">Register</button>
+            </div>
+            <div id="user-nav-menu" style="display:none; display:inline;">
+                <span id="welcome-user" style="color: white; margin-right: 10px; font-weight:500;"></span>
+                <button id="dashboard-tab-btn" onclick="switchTab('dashboard')" class="nav-btn">My Tickets & Dashboard</button>
+                <button id="admin-tab-btn" onclick="switchTab('adminPanel')" class="nav-btn" style="display:none;">Admin Report</button>
+                <button onclick="logout()" class="nav-btn btn-danger">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        
+        <!-- HOME TAB -->
+        <section id="home" class="tab-content active">
+            <div class="hero">
+                <h1>Global Flight Reservation & Itinerary Management</h1>
+                <p>Consolidating real-time flight data, inventory, and fares worldwide. Book Economy, Business, or First Class instantly.</p>
+                <button onclick="switchTab('flights')" class="btn-primary" style="padding: 0.8rem 1.8rem; font-size:1.1rem;">Search Flights Now</button>
+            </div>
+        </section>
+
+        <!-- SEARCH FLIGHT PAGE -->
+        <section id="flights" class="tab-content">
+            <h2>Search Flight Page (Global Distribution System)</h2>
+            <div class="search-box">
+                <div class="field">
+                    <label>Destination / To</label>
+                    <input type="text" id="search-dest" placeholder="e.g. London (LHR)">
+                </div>
+                <div class="field">
+                    <label>Departure Date</label>
+                    <input type="date" id="search-date">
+                </div>
+                <div class="field">
+                    <label>Class Type</label>
+                    <select id="search-class">
+                        <option value="All">All Classes</option>
+                        <option value="Economy">Economy</option>
+                        <option value="Business">Business</option>
+                        <option value="First Class">First Class</option>
+                    </select>
+                </div>
+                <button onclick="filterFlights()" class="btn-primary" style="height: 42px;">Search Flights</button>
+            </div>
+
+            <div id="flight-list" class="flight-grid"></div>
+        </section>
+
+        <!-- CUSTOMER FEEDBACK PAGE -->
+        <section id="feedback" class="tab-content">
+            <h2>Customer Feedback & Reviews</h2>
+            <p style="color:#64748b; margin-top:5px;">We value your experience! Share your feedback regarding our flights and services.</p>
+            <div class="card" style="max-width: 600px; margin-top:15px;">
+                <form onsubmit="submitFeedback(event)">
+                    <label>Your Name: <input type="text" id="fb-name" required></label>
+                    <label>Flight Number: <input type="text" id="fb-flight" placeholder="e.g. SW-101" required></label>
+                    <label>Rating: 
+                        <select id="fb-rating">
+                            <option value="5 Stars - Excellent">5 Stars - Excellent</option>
+                            <option value="4 Stars - Very Good">4 Stars - Very Good</option>
+                            <option value="3 Stars - Average">3 Stars - Average</option>
+                            <option value="2 Stars - Poor">2 Stars - Poor</option>
+                        </select>
+                    </label>
+                    <label>Feedback Comments: <textarea id="fb-comment" rows="4" required placeholder="Write your review..."></textarea></label>
+                    <button type="submit" class="btn-primary" style="margin-top:10px;">Submit Feedback</button>
+                </form>
+            </div>
+            
+            <h3 style="margin-top:25px;">Recent Customer Reviews</h3>
+            <div id="feedback-display-list" style="margin-top:10px; max-width:600px;"></div>
+        </section>
+
+        <!-- USER DASHBOARD (MY TICKET & CANCEL TICKET PAGE) -->
+        <section id="dashboard" class="tab-content">
+            <h2>User Dashboard (My Ticket Page)</h2>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>My Profile & Account Details</h3>
+                    <form id="profile-form" onsubmit="updateProfile(event)">
+                        <label>Full Name: <input type="text" id="prof-name" required></label>
+                        <label>Email ID: <input type="email" id="prof-email" disabled></label>
+                        <label>Phone Number: <input type="text" id="prof-phone" required></label>
+                        <button type="submit" class="btn-primary" style="margin-top:10px;">Update Profile</button>
+                    </form>
+                </div>
+
+                <div class="card full-width">
+                    <h3>My Booked Itineraries & E-Tickets (Cancel / Print)</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Flight</th>
+                                <th>Destination</th>
+                                <th>Date & Class</th>
+                                <th>Seat No</th>
+                                <th>Fare</th>
+                                <th>Actions (Print / Cancel)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-bookings-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN PANEL & ADMIN REPORT -->
+        <section id="adminPanel" class="tab-content">
+            <h2>Advanced Admin Panel & Admin Report</h2>
+            <div class="admin-grid">
+                
+                <!-- Flight Schedule & Inventory -->
+                <div class="card">
+                    <h3>Manage Flight Schedules & Inventory</h3>
+                    <form onsubmit="saveFlight(event)">
+                        <label>Flight No & Name: <input type="text" id="admin-flight-name" placeholder="SW-101 - SkySprint" required></label>
+                        <label>Destination: <input type="text" id="admin-dest" placeholder="London (LHR)" required></label>
+                        <label>Departure Date: <input type="date" id="admin-date" required></label>
+                        <label>Departure Time: <input type="time" id="admin-time" required></label>
+                        <label>Class Type & Fare ($): 
+                            <select id="admin-class" required>
+                                <option value="Economy">Economy ($150)</option>
+                                <option value="Business">Business ($450)</option>
+                                <option value="First Class">First Class ($850)</option>
+                            </select>
+                        </label>
+                        <label>Total Inventory Seats: <input type="number" id="admin-seats" value="30" required></label>
+                        <button type="submit" class="btn-primary" style="margin-top:10px;">Add / Update Flight</button>
+                    </form>
+                </div>
+
+                <!-- Admin Report & Global Distribution Metrics -->
+                <div class="card">
+                    <h3>Admin Report & Global Distribution Stats</h3>
+                    <button onclick="generateAdminReport()" class="btn-primary" style="margin-bottom:10px;">Refresh Revenue & Booking Report</button>
+                    <div id="admin-report-box" style="font-size:0.9rem; background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">
+                        Click refresh to generate global system stats.
+                    </div>
+                </div>
+
+                <!-- All Flights Catalog -->
+                <div class="card full-width">
+                    <h3>All Flights Inventory Catalog</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Flight Name</th><th>Destination</th><th>Date & Time</th><th>Class & Fare</th><th>Available Seats</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="admin-flights-table"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('loginModal')">&times;</span>
+            <h2>Administrator / User Login Page</h2>
+            <form onsubmit="handleLogin(event)">
+                <label>Email: <input type="email" id="login-email" required></label>
+                <label>Password: <input type="password" id="login-password" required></label>
+                <button type="submit" class="btn-primary" style="margin-top:15px; width:100%;">Login</button>
+            </form>
+            <div style="margin-top:10px; font-size:0.9rem; text-align:right;">
+                <a href="#" onclick="closeModal('loginModal'); openModal('forgotPasswordModal'); return false;" style="color:#2563eb;">Forgot Password Page</a>
+            </div>
+            <p style="margin-top:12px; font-size:0.85rem; background:#f8fafc; padding:8px; border-radius:4px;">
+                <b>Admin:</b> admin@airline.com / admin123<br>
+                <b>User:</b> user@airline.com / user123
+            </p>
+        </div>
+    </div>
+
+    <!-- REGISTER MODAL -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('registerModal')">&times;</span>
+            <h2>User Registration Page</h2>
+            <form onsubmit="handleRegister(event)">
+                <label>Full Name: <input type="text" id="reg-name" required></label>
+                <label>Email: <input type="email" id="reg-email" required></label>
+                <label>Phone: <input type="text" id="reg-phone" required></label>
+                <label>Password: <input type="password" id="reg-password" required></label>
+                <button type="submit" class="btn-primary" style="margin-top:15px; width:100%;">Register Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FORGOT PASSWORD PAGE MODAL -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('forgotPasswordModal')">&times;</span>
+            <h2>Forgot Password Page</h2>
+            <form onsubmit="handleForgotPassword(event)">
+                <label>Registered Email: <input type="email" id="forgot-email" required></label>
+                <label>New Password: <input type="password" id="forgot-new-pass" required></label>
+                <button type="submit" class="btn-primary" style="margin-top:15px; width:100%;">Reset Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- BOOK TICKET & SEAT SELECTION MODAL -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('bookingModal')">&times;</span>
+            <h2 id="modal-flight-title">Book Ticket Page</h2>
+            <p id="modal-flight-info" style="color:#64748b; font-size:0.9rem; margin-bottom:10px;"></p>
+            
+            <h4>Select Your Seat:</h4>
+            <div id="seat-layout" class="seat-container"></div>
+            <p style="font-weight:600;">Selected Seat: <span id="selected-seat-display">None</span></p>
+
+            <form onsubmit="proceedToPayment(event)">
+                <input type="hidden" id="booking-flight-id">
+                <label>Passenger Name: <input type="text" id="pass-name" required></label>
+                <label>Passport / ID Number: <input type="text" id="pass-passport" required></label>
+                
+                <p style="margin-top:10px; font-weight:600; font-size:1.1rem;">Ticket Fare: $<span id="booking-fare-amount">0</span></p>
+                <button type="submit" class="btn-primary" style="margin-top:15px; width:100%;">Proceed to Ticket Payment Page</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TICKET PAYMENT PAGE MODAL -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('paymentModal')">&times;</span>
+            <h2>Ticket Payment Page</h2>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:10px;">Secure Payment Gateway Integration</p>
+            
+            <form onsubmit="completePayment(event)">
+                <label>Card Number: <input type="text" placeholder="4111 2222 3333 4444" required></label>
+                <div style="display:flex; gap:10px; margin-top:8px;">
+                    <label style="flex:1;">Expiry (MM/YY): <input type="text" placeholder="12/28" required></label>
+                    <label style="flex:1;">CVV: <input type="password" placeholder="123" required></label>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top:20px; width:100%;">Pay $<span id="payment-modal-fare">0</span> & Confirm Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PRINT TICKET PAGE MODAL -->
+    <div id="printTicketModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('printTicketModal')">&times;</span>
+            <h2>Print Ticket Page (E-Ticket)</h2>
+            <div id="ticket-receipt-content" class="ticket-print-box"></div>
+            <button onclick="window.print()" class="btn-secondary" style="margin-top:15px; width:100%;">Print Itinerary & E-Ticket</button>
+        </div>
+    </div>
+
+    <script>
+        // --- INITIAL STATE & LOCAL STORAGE ---
+        const defaultFlights = [
+            { id: 1, name: "SW-101 - SkySprint", dest: "London (LHR)", date: "2026-06-20", time: "09:30", classType: "Economy", fare: 150, seats: 30, bookedSeats: ["1A", "2B"] },
+            { id: 2, name: "SW-202 - AeroLux", dest: "New York (JFK)", date: "2026-06-22", time: "14:15", classType: "Business", fare: 450, seats: 18, bookedSeats: ["3C"] },
+            { id: 3, name: "SW-303 - GlobalJet", dest: "Dubai (DXB)", date: "2026-06-25", time: "23:00", classType: "First Class", fare: 850, seats: 12, bookedSeats: [] }
+        ];
+
+        const defaultFeedbacks = [
+            { name: "John Doe", flight: "SW-101", rating: "5 Stars - Excellent", comment: "Outstanding service and very smooth check-in!" }
+        ];
+
+        if (!localStorage.getItem('flights')) localStorage.setItem('flights', JSON.stringify(defaultFlights));
+        if (!localStorage.getItem('feedbacks')) localStorage.setItem('feedbacks', JSON.stringify(defaultFeedbacks));
+        if (!localStorage.getItem('users')) {
+            localStorage.setItem('users', JSON.stringify([
+                { name: "Default Passenger", email: "user@airline.com", phone: "555-0199", password: "user123", role: "user" },
+                { name: "Administrator", email: "admin@airline.com", phone: "555-0100", password: "admin123", role: "admin" }
+            ]));
+        }
+        if (!localStorage.getItem('bookings')) localStorage.setItem('bookings', JSON.stringify([]));
+
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let activeSelectedFlightId = null;
+        let activeSelectedSeat = null;
+        let pendingBookingData = null;
+
+        // --- NAVIGATION & TABS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('nav .nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'flights') renderFlights(JSON.parse(localStorage.getItem('flights')));
+            if (tabId === 'feedback') renderFeedbacks();
+            if (tabId === 'dashboard') loadUserDashboard();
+            if (tabId === 'adminPanel') loadAdminPanel();
+        }
+
+        function updateNavAuth() {
+            const authNav = document.getElementById('auth-nav-buttons');
+            const userNav = document.getElementById('user-nav-menu');
+            const adminBtn = document.getElementById('admin-tab-btn');
+            const welcomeUser = document.getElementById('welcome-user');
+
+            if (currentUser) {
+                authNav.style.display = 'none';
+                userNav.style.display = 'inline';
+                welcomeUser.innerText = `Hello, ${currentUser.name}`;
+                adminBtn.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
+            } else {
+                authNav.style.display = 'inline';
+                userNav.style.display = 'none';
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- AUTHENTICATION & FORGOT PASSWORD ---
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const phone = document.getElementById('reg-phone').value;
+            const password = document.getElementById('reg-password').value;
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            if (users.some(u => u.email === email)) {
+                alert("Email already registered!");
+                return;
+            }
+
+            users.push({ name, email, phone, password, role: 'user' });
+            localStorage.setItem('users', JSON.stringify(users));
+            alert("Registration successful! Please login.");
+            closeModal('registerModal');
+            openModal('loginModal');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            let user = users.find(u => u.email === email && u.password === password);
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateNavAuth();
+                closeModal('loginModal');
+                alert(`Welcome back, ${user.name}!`);
+                switchTab(user.role === 'admin' ? 'adminPanel' : 'dashboard');
+            } else {
+                alert("Invalid email or password!");
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateNavAuth();
+            switchTab('home');
+            alert("Logged out successfully.");
+        }
+
+        function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value;
+            const newPass = document.getElementById('forgot-new-pass').value;
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            let user = users.find(u => u.email === email);
+            if (user) {
+                user.password = newPass;
+                localStorage.setItem('users', JSON.stringify(users));
+                alert("Password successfully reset! You can now log in.");
+                closeModal('forgotPasswordModal');
+                openModal('loginModal');
+            } else {
+                alert("Email not found in registered users.");
+            }
+        }
+
+        // --- SEARCH FLIGHT PAGE ---
+        function renderFlights(flightsArray) {
+            const container = document.getElementById('flight-list');
+            container.innerHTML = '';
+
+            if (flightsArray.length === 0) {
+                container.innerHTML = `<p>No flights found matching your search criteria.</p>`;
+                return;
+            }
+
+            flightsArray.forEach(flight => {
+                container.innerHTML += `
+                    <div class="flight-card">
+                        <h3>${flight.name}</h3>
+                        <p><b>Destination:</b> ${flight.dest}</p>
+                        <p><b>Date & Time:</b> ${flight.date} at ${flight.time}</p>
+                        <p><b>Class:</b> ${flight.classType} | <b>Fare:</b> $${flight.fare}</p>
+                        <p><b>Real-Time Seats Available:</b> <span style="color:green; font-weight:bold;">${flight.seats} seats</span></p>
+                        <button onclick="openBookingModal(${flight.id})" class="btn-primary" style="margin-top:10px; width:100%;">Book Ticket</button>
+                    </div>
+                `;
+            });
+        }
+
+        function filterFlights() {
+            const dest = document.getElementById('search-dest').value.toLowerCase();
+            const date = document.getElementById('search-date').value;
+            const classType = document.getElementById('search-class').value;
+
+            const flights = JSON.parse(localStorage.getItem('flights'));
+            const filtered = flights.filter(f => {
+                const destMatch = f.dest.toLowerCase().includes(dest);
+                const dateMatch = date ? f.date === date : true;
+                const classMatch = classType === 'All' ? true : f.classType === classType;
+                return destMatch && dateMatch && classMatch;
+            });
+
+            renderFlights(filtered);
+        }
+
+        // --- BOOK TICKET & SEAT SELECTION ---
+        function openBookingModal(flightId) {
+            if (!currentUser) {
+                alert("Please log in first to book flight tickets.");
+                openModal('loginModal');
+                return;
+            }
+
+            activeSelectedFlightId = flightId;
+            activeSelectedSeat = null;
+            const flights = JSON.parse(localStorage.getItem('flights'));
+            const flight = flights.find(f => f.id === flightId);
+
+            document.getElementById('modal-flight-title').innerText = `Book Ticket: ${flight.name}`;
+            document.getElementById('modal-flight-info').innerText = `Destination: ${flight.dest} | Date: ${flight.date} (${flight.time}) | Class: ${flight.classType}`;
+            document.getElementById('booking-flight-id').value = flight.id;
+            document.getElementById('pass-name').value = currentUser.name;
+            document.getElementById('booking-fare-amount').innerText = flight.fare;
+
+            renderSeatLayout(flight);
+            openModal('bookingModal');
+        }
+
+        function renderSeatLayout(flight) {
+            const layout = document.getElementById('seat-layout');
+            layout.innerHTML = '';
+            const rows = ['1', '2', '3', '4', '5'];
+            const cols = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+            rows.forEach(r => {
+                cols.forEach(c => {
+                    const seatNum = `${r}${c}`;
+                    const isBooked = flight.bookedSeats && flight.bookedSeats.includes(seatNum);
+                    const isSelected = activeSelectedSeat === seatNum;
+
+                    let className = 'seat';
+                    if (isBooked) className += ' booked';
+                    if (isSelected) className += ' selected';
+
+                    layout.innerHTML += `
+                        <div class="${className}" onclick="${isBooked ? '' : `selectSeat('${seatNum}')`}">${seatNum}</div>
+                    `;
+                });
+            });
+            document.getElementById('selected-seat-display').innerText = activeSelectedSeat || 'None';
+        }
+
+        function selectSeat(seatNum) {
+            activeSelectedSeat = seatNum;
+            const flights = JSON.parse(localStorage.getItem('flights'));
+            const flight = flights.find(f => f.id === activeSelectedFlightId);
+            renderSeatLayout(flight);
+        }
+
+        function proceedToPayment(e) {
+            e.preventDefault();
+            if (!activeSelectedSeat) {
+                alert("Please select a seat from the seating chart.");
+                return;
+            }
+
+            const flights = JSON.parse(localStorage.getItem('flights'));
+            const flight = flights.find(f => f.id === activeSelectedFlightId);
+
+            pendingBookingData = {
+                flightId: flight.id,
+                flightName: flight.name,
+                dest: flight.dest,
+                dateClass: `${flight.date} | ${flight.classType}`,
+                seat: activeSelectedSeat,
+                passenger: `${document.getElementById('pass-name').value} (Passport: ${document.getElementById('pass-passport').value})`,
+                fare: flight.fare
+            };
+
+            document.getElementById('payment-modal-fare').innerText = flight.fare;
+            closeModal('bookingModal');
+            openModal('paymentModal');
+        }
+
+        // --- TICKET PAYMENT PAGE & CONFIRMATION ---
+        function completePayment(e) {
+            e.preventDefault();
+            const flights = JSON.parse(localStorage.getItem('flights'));
+            const flightIndex = flights.findIndex(f => f.id === pendingBookingData.flightId);
+
+            // Update flight inventory seats
+            flights[flightIndex].seats -= 1;
+            flights[flightIndex].bookedSeats.push(pendingBookingData.seat);
+            localStorage.setItem('flights', JSON.stringify(flights));
+
+            const bookingId = 'BK' + Math.floor(10000 + Math.random() * 90000);
+            const finalBooking = {
+                id: bookingId,
+                userEmail: currentUser.email,
+                ...pendingBookingData,
+                status: 'Confirmed & E-Ticket Issued'
+            };
+
+            const bookings = JSON.parse(localStorage.getItem('bookings'));
+            bookings.push(finalBooking);
+            localStorage.setItem('bookings', JSON.stringify(bookings));
+
+            closeModal('paymentModal');
+            alert(`Payment Successful! E-Ticket confirmation email sent to ${currentUser.email}. Booking ID: ${bookingId}`);
+            switchTab('dashboard');
+        }
+
+        // --- CUSTOMER FEEDBACK PAGE ---
+        function submitFeedback(e) {
+            e.preventDefault();
+            const name = document.getElementById('fb-name').value;
+            const flight = document.getElementById('fb-flight').value;
+            const rating = document.getElementById('fb-rating').value;
+            const comment = document.getElementById('fb-comment').value;
+
+            let feedbacks = JSON.parse(localStorage.getItem('feedbacks'));
+            feedbacks.push({ name, flight, rating, comment });
+            localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+
+            alert("Thank you for your valuable feedback!");
+            document.getElementById('fb-comment').value = '';
+            renderFeedbacks();
+        }
+
+        function renderFeedbacks() {
+            const feedbacks = JSON.parse(localStorage.getItem('feedbacks'));
+            const container = document.getElementById('feedback-display-list');
+            container.innerHTML = feedbacks.map(f => `
+                <div style="background:white; padding:12px; border-radius:6px; margin-bottom:10px; border:1px solid #e2e8f0;">
+                    <b>${f.name}</b> (Flight: ${f.flight}) - <span style="color:#2563eb; font-weight:600;">${f.rating}</span>
+                    <p style="margin-top:4px; font-size:0.9rem;">${f.comment}</p>
+                </div>
+            `).join('');
+        }
+
+        // --- USER DASHBOARD (MY TICKET & CANCEL TICKET PAGE) ---
+        function loadUserDashboard() {
+            if (!currentUser) return;
+            document.getElementById('prof-name').value = currentUser.name;
+            document.getElementById('prof-email').value = currentUser.email;
+            document.getElementById('prof-phone').value = currentUser.phone;
+
+            const bookings = JSON.parse(localStorage.getItem('bookings'));
+            const userBookings = bookings.filter(b => b.userEmail === currentUser.email);
+            const tbody = document.getElementById('user-bookings-table');
+            tbody.innerHTML = '';
+
+            if (userBookings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No flight reservations found.</td></tr>`;
+                return;
+            }
+
+            userBookings.forEach(b => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${b.id}</b></td>
+                        <td>${b.flightName}</td>
+                        <td>${b.dest}</td>
+                        <td>${b.dateClass}</td>
+                        <td>Seat ${b.seat}</td>
+                        <td>$${b.fare}</td>
+                        <td>
+                            <button onclick="printTicket('${b.id}')" class="btn-primary" style="padding:4px 8px; font-size:0.8rem; margin-bottom:4px;">Print Ticket</button>
+                            <button onclick="cancelTicket('${b.id}')" class="btn-danger" style="padding:4px 8px; font-size:0.8rem;">Cancel Ticket</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateProfile(e) {
+            e.preventDefault();
+            currentUser.name = document.getElementById('prof-name').value;
+            currentUser.phone = document.getElementById('prof-phone').value;
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            users = users.map(u => u.email === currentUser.email ? currentUser : u);
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            alert("Profile updated successfully!");
+            updateNavAuth();
+        }
+
+        function printTicket(bookingId) {
+            const bookings = JSON.parse(localStorage.getItem('bookings'));
+            const b = bookings.find(item => item.id === bookingId);
+            if (b) {
+                document.getElementById('ticket-receipt-content').innerHTML = `
+                    <h3 style="color:#0f172a;">SKYWINGS GLOBAL AIRLINES - E-TICKET</h3>
+                    <hr style="margin:10px 0;">
+                    <p><b>Booking Reference ID:</b> ${b.id}</p>
+                    <p><b>Flight Name:</b> ${b.flightName}</p>
+                    <p><b>Destination:</b> ${b.dest}</p>
+                    <p><b>Date & Class:</b> ${b.dateClass}</p>
+                    <p><b>Assigned Seat:</b> Seat ${b.seat}</p>
+                    <p><b>Passenger:</b> ${b.passenger}</p>
+                    <p><b>Total Fare Paid:</b> $${b.fare} (Paid via Secure Gateway)</p>
+                    <p><b>Status:</b> ${b.status}</p>
+                `;
+                openModal('printTicketModal');
+            }
+        }
+
+        function cancelTicket(bookingId) {
+            if (confirm("Are you sure you want to cancel this flight reservation?")) {
+                let bookings = JSON.parse(localStorage.getItem('bookings'));
+                const b = bookings.find(item => item.id === bookingId);
+
+                // Return seat back to flight inventory
+                let flights = JSON.parse(localStorage.getItem('flights'));
+                let flight = flights.find(f => f.name === b.flightName);
+                if (flight) {
+                    flight.seats += 1;
+                    flight.bookedSeats = flight.bookedSeats.filter(s => s !== b.seat);
+                    localStorage.setItem('flights', JSON.stringify(flights));
+                }
+
+                bookings = bookings.filter(item => item.id !== bookingId);
+                localStorage.setItem('bookings', JSON.stringify(bookings));
+                loadUserDashboard();
+                alert("Flight ticket cancelled successfully. Refund initiated.");
+            }
+        }
+
+        // --- ADMIN PANEL & ADMIN REPORT ---
+        function loadAdminPanel() {
+            if (!currentUser || currentUser.role !== 'admin') {
+                alert("Unauthorized access!");
+                switchTab('home');
+                return;
+            }
+
+            const flights = JSON.parse(localStorage.getItem('flights'));
+            const tbody = document.getElementById('admin-flights-table');
+            tbody.innerHTML = flights.map(f => `
+                <tr>
+                    <td>${f.name}</td>
+                    <td>${f.dest}</td>
+                    <td>${f.date} ${f.time}</td>
+                    <td>${f.classType} ($${f.fare})</td>
+                    <td>${f.seats} seats</td>
+                    <td><button onclick="deleteFlight(${f.id})" class="btn-danger" style="padding:2px 6px; font-size:0.8rem;">Delete</button></td>
+                </tr>
+            `).join('');
+
+            generateAdminReport();
+        }
+
+        function saveFlight(e) {
+            e.preventDefault();
+            const name = document.getElementById('admin-flight-name').value;
+            const dest = document.getElementById('admin-dest').value;
+            const date = document.getElementById('admin-date').value;
+            const time = document.getElementById('admin-time').value;
+            const classType = document.getElementById('admin-class').value;
+            
+            let fare = 150;
+            if (classType === 'Business') fare = 450;
+            else if (classType === 'First Class') fare = 850;
+
+            const seats = parseInt(document.getElementById('admin-seats').value);
+
+            let flights = JSON.parse(localStorage.getItem('flights'));
+            flights.push({ id: Date.now(), name, dest, date, time, classType, fare, seats, bookedSeats: [] });
+            localStorage.setItem('flights', JSON.stringify(flights));
+
+            alert("Flight schedule and inventory saved successfully!");
+            loadAdminPanel();
+        }
+
+        function deleteFlight(flightId) {
+            if (confirm("Delete this flight schedule?")) {
+                let flights = JSON.parse(localStorage.getItem('flights'));
+                flights = flights.filter(f => f.id !== flightId);
+                localStorage.setItem('flights', JSON.stringify(flights));
+                loadAdminPanel();
+            }
+        }
+
+        function generateAdminReport() {
+            const bookings = JSON.parse(localStorage.getItem('bookings'));
+            const totalRevenue = bookings.reduce((sum, b) => sum + b.fare, 0);
+
+            const reportBox = document.getElementById('admin-report-box');
+            reportBox.innerHTML = `
+                <b>📊 Global Distribution & Admin Report Summary:</b><br>
+                • Total Confirmed Bookings: ${bookings.length}<br>
+                • Total Revenue Generated: $${totalRevenue}<br>
+                • System Status: Fully Operational (Real-time GDS Active)
+            `;
+        }
+
+        window.onload = function() {
+            updateNavAuth();
+            renderFlights(JSON.parse(localStorage.getItem('flights')));
+        };
+    </script>
+</body>
+</html>
