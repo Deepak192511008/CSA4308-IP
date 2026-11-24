@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exp 10 - StyleHub Online Fashion Store</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f4f6f9; color: #1f2937; }
+    header { background: #be185d; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .hero { position: relative; height: 210px; background: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=80') center/cover no-repeat; display: flex; align-items: flex-end; }
+    .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent, rgba(0,0,0,0.72)); }
+    .hero-text { position: relative; z-index: 1; color: #fff; padding: 18px 24px; }
+    .container { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 18px; margin-bottom: 18px; }
+    .creds { background: #fef3c7; border: 1px solid #f59e0b; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin: 10px 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    input, select, button { width: 100%; padding: 9px 11px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; }
+    button { background: #be185d; color: #fff; border: none; font-weight: 600; cursor: pointer; }
+    button.secondary { background: #475569; width: auto; }
+    .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; background: #e2e8f0; font-size: 12px; font-weight: 600; }
+    .hidden { display: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #e5e7eb; padding: 9px; text-align: left; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div><strong>Experiment 10: StyleHub Online Fashion Store</strong></div>
+    <div id="sessionInfo">Guest Mode</div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-text">
+      <h2 style="margin:0;">StyleHub Online Fashion Store</h2>
+      <p style="margin:4px 0 0; font-size:14px;">CSA4308 Internet Programming Lab — Multi-Role Interactive Portal</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card" id="loginCard">
+      <h3>Role-Based Login & Registration</h3>
+      <div class="creds">
+        <strong>Visible Role Login Credentials:</strong><br/>
+        • <strong>Customer:</strong> <code>shopper@stylehub.local</code> / <code>Shop@123</code><br/>• <strong>Admin:</strong> <code>admin@stylehub.local</code> / <code>Admin@123</code>
+      </div>
+      <div class="grid">
+        <div>
+          <label>Select Role</label>
+          <select id="loginRole" onchange="autofillDemo()"><option value="Customer">Customer</option><option value="Admin">Admin</option></select>
+        </div>
+        <div>
+          <label>Email / ID</label>
+          <input type="text" id="loginEmail" value="shopper@stylehub.local" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" id="loginPass" value="Shop@123" />
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button onclick="login()">Sign In</button>
+        </div>
+      </div>
+      <hr style="margin:16px 0; border:0; border-top:1px solid #e5e7eb;" />
+      <h4>New User Registration</h4>
+      <div class="grid">
+        <input type="text" id="regEmail" placeholder="New User Email" />
+        <input type="password" id="regPass" placeholder="Create Password" />
+        <button onclick="registerUser()">Register Account</button>
+      </div>
+    </div>
+
+    <div id="dashboard" class="hidden">
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>Active Role: <span class="badge" id="activeRoleBadge"></span></div>
+        <button class="secondary" onclick="logout()">Logout</button>
+      </div>
+
+      <div class="card">
+        <h3>Create / Submit Record</h3>
+        <div class="grid">
+          <div><label>Apparel Category (Men/Women/Kids)</label><input type="text" id="f1" placeholder="Apparel Category (Men/Women/Kids)" /></div>
+          <div><label>Item Name & Color</label><input type="text" id="f2" placeholder="Item Name & Color" /></div>
+          <div><label>Size (S / M / L / XL)</label><input type="text" id="f3" placeholder="Size (S / M / L / XL)" /></div>
+          <div><label>Price (INR) & Delivery Address</label><input type="text" id="f4" placeholder="Price (INR) & Delivery Address" /></div>
+        </div>
+        <div style="margin-top:12px; max-width:240px;">
+          <button onclick="addRecord()">Submit Entry</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Live Records & Workflow Status</h3>
+        <input type="text" id="searchBox" placeholder="Search records..." oninput="renderTable()" style="max-width:320px; margin-bottom:8px;" />
+        <div id="recordsTable"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ACCOUNTS = [{'role': 'Customer', 'email': 'shopper@stylehub.local', 'pass': 'Shop@123'}, {'role': 'Admin', 'email': 'admin@stylehub.local', 'pass': 'Admin@123'}];
+    let currentUser = null;
+    let records = [
+      {
+        id: "REC-" + (1001),
+        by: ACCOUNTS[0].email,
+        f1: "Sample Apparel Category (Men/Women/Kids)",
+        f2: "Standard",
+        f3: "250",
+        f4: "1",
+        summary: "Initialized demo entry",
+        status: "Confirmed"
+      }
+    ];
+
+    
+    function computeCustomMetric(f1, f2, f3, f4) {
+      return `Verified Record: ${f1} | ${f2}`;
+    }
+    
+
+    function autofillDemo() {
+      const acc = ACCOUNTS.find(a => a.role === loginRole.value);
+      if (acc) { loginEmail.value = acc.email; loginPass.value = acc.pass; }
+    }
+
+    function registerUser() {
+      const email = regEmail.value.trim(), pass = regPass.value.trim();
+      if (!email || !pass) return alert("Enter email and password.");
+      ACCOUNTS.push({ role: ACCOUNTS[0].role, email, pass });
+      regEmail.value = regPass.value = "";
+      alert("Account registered! You can now log in.");
+    }
+
+    function login() {
+      const role = loginRole.value, email = loginEmail.value.trim(), pass = loginPass.value.trim();
+      const user = ACCOUNTS.find(a => a.role === role && a.email === email && a.pass === pass);
+      if (!user) return alert("Invalid credentials for selected role.");
+      currentUser = user;
+      loginCard.classList.add("hidden");
+      dashboard.classList.remove("hidden");
+      activeRoleBadge.textContent = `${user.role} (${user.email})`;
+      sessionInfo.textContent = `${user.role} | ${user.email}`;
+      renderTable();
+    }
+
+    function logout() {
+      currentUser = null;
+      dashboard.classList.add("hidden");
+      loginCard.classList.remove("hidden");
+      sessionInfo.textContent = "Guest Mode";
+    }
+
+    function addRecord() {
+      if (!f1.value.trim()) return alert("Please enter Apparel Category (Men/Women/Kids).");
+      const summary = computeCustomMetric(f1.value, f2.value, f3.value, f4.value);
+      records.unshift({
+        id: "REC-" + Math.floor(1000 + Math.random() * 9000),
+        by: currentUser.email,
+        f1: f1.value.trim(),
+        f2: f2.value.trim() || "-",
+        f3: f3.value.trim() || "-",
+        f4: f4.value.trim() || "-",
+        summary,
+        status: "Confirmed"
+      });
+      f1.value = f2.value = f3.value = f4.value = "";
+      renderTable();
+    }
+
+    function updateStatus(id, val) {
+      const rec = records.find(r => r.id === id);
+      if (rec) { rec.status = val; renderTable(); }
+    }
+
+    function renderTable() {
+      const q = (searchBox.value || "").toLowerCase();
+      const filtered = records.filter(r => JSON.stringify(r).toLowerCase().includes(q));
+      recordsTable.innerHTML = filtered.length ? `
+        <table>
+          <tr>
+            <th>ID</th><th>Apparel Category (Men/Women/Kids)</th><th>Item Name & Color</th><th>Size (S / M / L / XL)</th><th>Price (INR) & Delivery Address</th><th>Computed / Notes</th><th>Status</th><th>Update</th>
+          </tr>
+          ${filtered.map(r => `
+            <tr>
+              <td>${r.id}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.f3}</td><td>${r.f4}</td>
+              <td><strong>${r.summary}</strong></td>
+              <td><span class="badge">${r.status}</span></td>
+              <td>
+                <select onchange="updateStatus('${r.id}', this.value)">
+                  <option value="Confirmed">Confirmed</option><option value="Dispatched">Dispatched</option><option value="Delivered">Delivered</option><option value="Return Requested">Return Requested</option>
+                </select>
+              </td>
+            </tr>`).join("")}
+        </table>` : "<p>No matching records.</p>";
+    }
+  </script>
+</body>
+</html>
